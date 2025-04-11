@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二次函数可视化</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        
+        #graph-container {
+            width: 600px;
+            height: 400px;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        #graph {
+            border: 2px solid #333;
+            background-color: white;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            width: 600px;
+            gap: 15px;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .slider-container label {
+            width: 30px;
+            text-align: right;
+        }
+        
+        .slider-container input[type="range"] {
+            flex-grow: 1;
+        }
+        
+        .slider-container input[type="number"] {
+            width: 60px;
+        }
+        
+        .function-info {
+            margin-top: 20px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 600px;
+        }
+    </style>
+</head>
+<body>
+    <h1>二次函数可视化: y = ax² + bx + c</h1>
+    
+    <div id="graph-container">
+        <canvas id="graph" width="600" height="400"></canvas>
+    </div>
+    
+    <div class="controls">
+        <div class="slider-container">
+            <label for="a">a:</label>
+            <input type="range" id="a" min="-10" max="10" step="0.1" value="1">
+            <input type="number" id="a-value" min="-10" max="10" step="0.1" value="1">
+        </div>
+        
+        <div class="slider-container">
+            <label for="b">b:</label>
+            <input type="range" id="b" min="-10" max="10" step="0.1" value="0">
+            <input type="number" id="b-value" min="-10" max="10" step="0.1" value="0">
+        </div>
+        
+        <div class="slider-container">
+            <label for="c">c:</label>
+            <input type="range" id="c" min="-10" max="10" step="0.1" value="0">
+            <input type="number" id="c-value" min="-10" max="10" step="0.1" value="0">
+        </div>
+    </div>
+    
+    <div class="function-info">
+        <h3>函数特征</h3>
+        <p id="vertex">顶点: (0, 0)</p>
+        <p id="roots">x轴交点: 无实数解</p>
+        <p id="direction">开口方向: 向上</p>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const canvas = document.getElementById('graph');
+        const ctx = canvas.getContext('2d');
+        
+        // 获取滑块和数值输入框
+        const aSlider = document.getElementById('a');
+        const bSlider = document.getElementById('b');
+        const cSlider = document.getElementById('c');
+        const aValue = document.getElementById('a-value');
+        const bValue = document.getElementById('b-value');
+        const cValue = document.getElementById('c-value');
+        
+        // 获取信息显示元素
+        const vertexInfo = document.getElementById('vertex');
+        const rootsInfo = document.getElementById('roots');
+        const directionInfo = document.getElementById('direction');
+        
+        // 同步滑块和数值输入框
+        aSlider.addEventListener('input', () => {
+            aValue.value = aSlider.value;
+            drawGraph();
+        });
+        
+        bSlider.addEventListener('input', () => {
+            bValue.value = bSlider.value;
+            drawGraph();
+        });
+        
+        cSlider.addEventListener('input', () => {
+            cValue.value = cSlider.value;
+            drawGraph();
+        });
+        
+        aValue.addEventListener('input', () => {
+            aSlider.value = aValue.value;
+            drawGraph();
+        });
+        
+        bValue.addEventListener('input', () => {
+            bSlider.value = bValue.value;
+            drawGraph();
+        });
+        
+        cValue.addEventListener('input', () => {
+            cSlider.value = cValue.value;
+            drawGraph();
+        });
+        
+        // 绘制坐标轴
+        function drawAxes() {
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 1;
+            
+            // x轴
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+            
+            // y轴
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+            
+            // 绘制刻度
+            ctx.fillStyle = '#000';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            
+            // x轴刻度
+            for (let x = -10; x <= 10; x += 1) {
+                if (x === 0) continue;
+                const pixelX = canvas.width / 2 + x * 30;
+                ctx.beginPath();
+                ctx.moveTo(pixelX, canvas.height / 2 - 5);
+                ctx.lineTo(pixelX, canvas.height / 2 + 5);
+                ctx.stroke();
+                ctx.fillText(x.toString(), pixelX, canvas.height / 2 + 10);
+            }
+            
+            // y轴刻度
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            for (let y = -10; y <= 10; y += 1) {
+                if (y === 0) continue;
+                const pixelY = canvas.height / 2 - y * 20;
+                ctx.beginPath();
+                ctx.moveTo(canvas.width / 2 - 5, pixelY);
+                ctx.lineTo(canvas.width / 2 + 5, pixelY);
+                ctx.stroke();
+                ctx.fillText(y.toString(), canvas.width / 2 - 10, pixelY);
+            }
+            
+            // 原点标记
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            ctx.fillText('0', canvas.width / 2 - 10, canvas.height / 2 + 10);
+        }
+        
+        // 计算二次函数值
+        function quadratic(x, a, b, c) {
+            return a * x * x + b * x + c;
+        }
+        
+        // 计算顶点坐标
+        function calculateVertex(a, b, c) {
+            const x = -b / (2 * a);
+            const y = quadratic(x, a, b, c);
+            return { x, y };
+        }
+        
+        // 计算x轴交点
+        function calculateRoots(a, b, c) {
+            const discriminant = b * b - 4 * a * c;
+            
+            if (discriminant < 0) {
+                return [];
+            } else if (discriminant === 0) {
+                const x = -b / (2 * a);
+                return [x];
+            } else {
+                const x1 = (-b + Math.sqrt(discriminant)) / (2 * a);
+                const x2 = (-b - Math.sqrt(discriminant)) / (2 * a);
+                return [x1, x2];
+            }
+        }
+        
+        // 绘制函数图像
+        function drawGraph() {
+            // 获取当前参数值
+            const a = parseFloat(aSlider.value);
+            const b = parseFloat(bSlider.value);
+            const c = parseFloat(cSlider.value);
+            
+            // 清空画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制坐标轴
+            drawAxes();
+            
+            // 绘制函数图像
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            let firstPoint = true;
+            for (let pixelX = 0; pixelX < canvas.width; pixelX++) {
+                const x = (pixelX - canvas.width / 2) / 30;
+                const y = quadratic(x, a, b, c);
+                const pixelY = canvas.height / 2 - y * 20;
+                
+                if (firstPoint) {
+                    ctx.moveTo(pixelX, pixelY);
+                    firstPoint = false;
+                } else {
+                    ctx.lineTo(pixelX, pixelY);
+                }
+            }
+            
+            ctx.stroke();
+            
+            // 计算并显示顶点
+            const vertex = calculateVertex(a, b, c);
+            vertexInfo.textContent = `顶点: (${vertex.x.toFixed(2)}, ${vertex.y.toFixed(2)})`;
+            
+            // 绘制顶点
+            const vertexX = canvas.width / 2 + vertex.x * 30;
+            const vertexY = canvas.height / 2 - vertex.y * 20;
+            ctx.fillStyle = '#0000ff';
+            ctx.beginPath();
+            ctx.arc(vertexX, vertexY, 5, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // 计算并显示x轴交点
+            const roots = calculateRoots(a, b, c);
+            if (roots.length === 0) {
+                rootsInfo.textContent = 'x轴交点: 无实数解';
+            } else if (roots.length === 1) {
+                rootsInfo.textContent = `x轴交点: x = ${roots[0].toFixed(2)} (重根)`;
+                
+                // 绘制交点
+                const rootX = canvas.width / 2 + roots[0] * 30;
+                const rootY = canvas.height / 2;
+                ctx.fillStyle = '#00aa00';
+                ctx.beginPath();
+                ctx.arc(rootX, rootY, 5, 0, 2 * Math.PI);
+                ctx.fill();
+            } else {
+                rootsInfo.textContent = `x轴交点: x₁ = ${roots[0].toFixed(2)}, x₂ = ${roots[1].toFixed(2)}`;
+                
+                // 绘制交点
+                for (const root of roots) {
+                    const rootX = canvas.width / 2 + root * 30;
+                    const rootY = canvas.height / 2;
+                    ctx.fillStyle = '#00aa00';
+                    ctx.beginPath();
+                    ctx.arc(rootX, rootY, 5, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            }
+            
+            // 显示开口方向
+            directionInfo.textContent = `开口方向: ${a > 0 ? '向上' : '向下'}`;
+        }
+        
+        // 初始化绘制
+        drawGraph();
+    </script>
+</body>
+</html>
